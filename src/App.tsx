@@ -5,7 +5,10 @@ import { SkillsSection } from './components/SkillsSection';
 import { ProjectsSection } from './components/ProjectsSection';
 import { ContactSection } from './components/ContactSection';
 import { ProfileEditModal } from './components/ProfileEditModal';
+import { ThemePicker } from './components/ThemePicker';
 import { exportToPDF } from './utils/pdfExport';
+import { Language, translations } from './data/translations';
+import { ThemeId, getThemeById, applyThemeToDocument } from './data/themes';
 import {
   initialProfile,
   initialExperiences,
@@ -16,8 +19,33 @@ import { ProfileData } from './types';
 import { User, Briefcase, Code, FolderGit2, Mail, Sparkles, Download, Loader2, Eye, Printer, X, FileText } from 'lucide-react';
 
 const STORAGE_KEY = 'minimal_resume_profile_v1';
+const EXP_STORAGE_KEY = 'minimal_resume_experiences_v1';
+const THEME_STORAGE_KEY = 'minimal_resume_theme_v1';
 
 export default function App() {
+  const [lang, setLang] = useState<Language>('zh');
+  const t = translations[lang];
+
+  const [themeId, setThemeId] = useState<ThemeId>(() => {
+    try {
+      const saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved) return saved as ThemeId;
+    } catch (e) {
+      console.warn('Failed to load theme from localStorage:', e);
+    }
+    return 'zinc';
+  });
+
+  useEffect(() => {
+    const themeObj = getThemeById(themeId);
+    applyThemeToDocument(themeObj);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, themeId);
+    } catch (e) {
+      console.warn('Failed to save theme to localStorage:', e);
+    }
+  }, [themeId]);
+
   const [profile, setProfile] = useState<ProfileData>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -30,6 +58,18 @@ export default function App() {
     return initialProfile;
   });
 
+  const [experiences, setExperiences] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EXP_STORAGE_KEY);
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn('Failed to load experiences from localStorage:', e);
+    }
+    return initialExperiences;
+  });
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
@@ -37,6 +77,14 @@ export default function App() {
       console.warn('Failed to save profile to localStorage:', e);
     }
   }, [profile]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(EXP_STORAGE_KEY, JSON.stringify(experiences));
+    } catch (e) {
+      console.warn('Failed to save experiences to localStorage:', e);
+    }
+  }, [experiences]);
 
   const [activeTab, setActiveTab] = useState<'all' | 'experience' | 'skills' | 'projects' | 'contact'>('all');
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
@@ -154,11 +202,16 @@ export default function App() {
       {/* Main Container */}
       <div
         id="resume-app-container"
+        data-print-date={`簡歷版本：${new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })} (Printed)`}
         className={`flex-1 flex flex-col lg:flex-row max-w-[1440px] w-full mx-auto my-0 bg-white overflow-hidden ${isPreviewMode ? 'shadow-none rounded-none border-none' : 'shadow-2xl lg:my-4 lg:rounded-xl border border-zinc-200/80'}`}
       >
         {/* Left Sidebar */}
         <Sidebar
           profile={profile}
+          lang={lang}
+          themeId={themeId}
+          onSelectTheme={setThemeId}
+          onToggleLang={() => setLang(lang === 'zh' ? 'en' : 'zh')}
           onEditProfileClick={() => setIsEditModalOpen(true)}
           onQuickContactClick={handleQuickContact}
           onExportPDF={handleExportPDF}
@@ -175,79 +228,86 @@ export default function App() {
                   onClick={() => setActiveTab('all')}
                   className={`px-3 py-2 rounded-md transition-all flex items-center gap-1.5 ${
                     activeTab === 'all'
-                      ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                      ? 'bg-theme-primary text-white font-bold shadow-xs'
                       : 'text-zinc-600 hover:text-black hover:bg-zinc-100'
                   }`}
                 >
                   <User className="w-3.5 h-3.5" />
-                  <span>完整簡歷 (Overview)</span>
+                  <span>{t.navOverview}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('experience')}
                   className={`px-3 py-2 rounded-md transition-all flex items-center gap-1.5 ${
                     activeTab === 'experience'
-                      ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                      ? 'bg-theme-primary text-white font-bold shadow-xs'
                       : 'text-zinc-600 hover:text-black hover:bg-zinc-100'
                   }`}
                 >
                   <Briefcase className="w-3.5 h-3.5" />
-                  <span>經歷背景</span>
+                  <span>{t.navExperience}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('skills')}
                   className={`px-3 py-2 rounded-md transition-all flex items-center gap-1.5 ${
                     activeTab === 'skills'
-                      ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                      ? 'bg-theme-primary text-white font-bold shadow-xs'
                       : 'text-zinc-600 hover:text-black hover:bg-zinc-100'
                   }`}
                 >
                   <Code className="w-3.5 h-3.5" />
-                  <span>專業技能</span>
+                  <span>{t.navSkills}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('projects')}
                   className={`px-3 py-2 rounded-md transition-all flex items-center gap-1.5 ${
                     activeTab === 'projects'
-                      ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                      ? 'bg-theme-primary text-white font-bold shadow-xs'
                       : 'text-zinc-600 hover:text-black hover:bg-zinc-100'
                   }`}
                 >
                   <FolderGit2 className="w-3.5 h-3.5" />
-                  <span>精選作品集</span>
+                  <span>{t.navProjects}</span>
                 </button>
 
                 <button
                   onClick={() => setActiveTab('contact')}
                   className={`px-3 py-2 rounded-md transition-all flex items-center gap-1.5 ${
                     activeTab === 'contact'
-                      ? 'bg-zinc-900 text-white font-bold shadow-xs'
+                      ? 'bg-theme-primary text-white font-bold shadow-xs'
                       : 'text-zinc-600 hover:text-black hover:bg-zinc-100'
                   }`}
                 >
                   <Mail className="w-3.5 h-3.5" />
-                  <span>聯絡表單</span>
+                  <span>{t.navContact}</span>
                 </button>
               </div>
 
               <div className="flex items-center gap-2 pr-1">
+                {/* Theme Selector Dropdown */}
+                <ThemePicker
+                  currentThemeId={themeId}
+                  onSelectTheme={setThemeId}
+                  lang={lang}
+                />
+
                 <button
                   onClick={handleTogglePreviewMode}
                   className="px-3 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded text-xs font-bold transition-all border border-zinc-200 flex items-center gap-1.5"
                   title="切換至純白無干擾列印預覽格式"
                 >
                   <Eye className="w-3.5 h-3.5 text-zinc-600" />
-                  <span>預覽列印格式</span>
+                  <span>{t.previewPrintBtn}</span>
                 </button>
                 <button
                   onClick={handleExportPDF}
                   disabled={isExporting}
-                  className="px-3 py-1.5 bg-zinc-900 hover:bg-black text-white rounded text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-3 py-1.5 bg-theme-primary bg-theme-primary-hover text-white rounded text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>下載簡歷 PDF</span>
+                  <span>{t.exportPdfBtn}</span>
                 </button>
                 <div className="hidden xl:flex items-center gap-1.5 text-xs text-zinc-400 font-mono pl-2 border-l border-zinc-200">
                   <Sparkles className="w-3.5 h-3.5 text-amber-500" />
@@ -262,22 +322,32 @@ export default function App() {
             {/* View All (Default Mode) */}
             {activeTab === 'all' && (
               <>
-                <ExperienceSection experiences={initialExperiences} />
-                <SkillsSection categories={initialSkillCategories} />
-                <ProjectsSection projects={initialProjects} />
+                <ExperienceSection
+                  experiences={experiences}
+                  onUpdateExperiences={setExperiences}
+                  lang={lang}
+                />
+                <SkillsSection categories={initialSkillCategories} lang={lang} themeId={themeId} />
+                <ProjectsSection projects={initialProjects} lang={lang} />
                 <div id="contact-section">
-                  <ContactSection />
+                  <ContactSection lang={lang} />
                 </div>
               </>
             )}
 
             {/* Individual Tab Views */}
-            {activeTab === 'experience' && <ExperienceSection experiences={initialExperiences} />}
-            {activeTab === 'skills' && <SkillsSection categories={initialSkillCategories} />}
-            {activeTab === 'projects' && <ProjectsSection projects={initialProjects} />}
+            {activeTab === 'experience' && (
+              <ExperienceSection
+                experiences={experiences}
+                onUpdateExperiences={setExperiences}
+                lang={lang}
+              />
+            )}
+            {activeTab === 'skills' && <SkillsSection categories={initialSkillCategories} lang={lang} themeId={themeId} />}
+            {activeTab === 'projects' && <ProjectsSection projects={initialProjects} lang={lang} />}
             {activeTab === 'contact' && (
               <div id="contact-section">
-                <ContactSection />
+                <ContactSection lang={lang} />
               </div>
             )}
           </div>
@@ -287,19 +357,19 @@ export default function App() {
             <div className="bg-white rounded-xl border border-zinc-200/90 p-5 flex flex-wrap items-center justify-between gap-4 text-xs shadow-2xs">
               <div className="flex flex-wrap items-center gap-6 sm:gap-8">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
-                  <span className="text-zinc-500 font-medium">總工作資歷：</span>
-                  <span className="font-bold text-zinc-900">{profile.yearsExperience} 年經驗</span>
+                  <span className="w-2 h-2 rounded-full bg-theme-primary"></span>
+                  <span className="text-zinc-500 font-medium">{t.totalExpLabel}</span>
+                  <span className="font-bold text-zinc-900">{profile.yearsExperience} {t.yearsSuffix}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
-                  <span className="text-zinc-500 font-medium">精選代表作品：</span>
-                  <span className="font-bold text-zinc-900">{initialProjects.length} 項作品</span>
+                  <span className="w-2 h-2 rounded-full bg-theme-primary"></span>
+                  <span className="text-zinc-500 font-medium">{t.featuredProjectsLabel}</span>
+                  <span className="font-bold text-zinc-900">{initialProjects.length} {t.itemsSuffix}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-zinc-900"></span>
-                  <span className="text-zinc-500 font-medium">專業技能領域：</span>
-                  <span className="font-bold text-zinc-900">{initialSkillCategories.length} 大核心</span>
+                  <span className="w-2 h-2 rounded-full bg-theme-primary"></span>
+                  <span className="text-zinc-500 font-medium">{t.skillDomainsLabel}</span>
+                  <span className="font-bold text-zinc-900">{initialSkillCategories.length} {t.domainsSuffix}</span>
                 </div>
               </div>
               <div className="text-zinc-400 font-mono text-[11px]">

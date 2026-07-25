@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { ContactMessage } from '../types';
+import { Language, translations } from '../data/translations';
 import { Send, CheckCircle, Mail, MessageSquare, Clock, Trash2 } from 'lucide-react';
 
 interface ContactSectionProps {
   onSendMessage?: (msg: ContactMessage) => void;
+  lang?: Language;
 }
 
-export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage }) => {
+export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage, lang = 'zh' }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,6 +20,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
   const [messages, setMessages] = useState<ContactMessage[]>([]);
   const [activeTab, setActiveTab] = useState<'form' | 'history'>('form');
 
+  const t = translations[lang];
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
@@ -26,9 +30,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
       id: `msg-${Date.now()}`,
       name: formData.name,
       email: formData.email,
-      subject: formData.subject || '未填寫主旨',
+      subject: formData.subject || (lang === 'en' ? 'No subject' : '未填寫主旨'),
       message: formData.message,
-      createdAt: new Date().toLocaleString('zh-TW', {
+      createdAt: new Date().toLocaleString(lang === 'en' ? 'en-US' : 'zh-TW', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
@@ -52,8 +56,8 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
     <section className="flex-1 flex flex-col space-y-6">
       <div className="flex items-center justify-between pb-3 border-b border-zinc-200/80">
         <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2 tracking-tight">
-          <span className="w-5 h-[1.5px] bg-zinc-900"></span>
-          聯絡我 (Get in Touch)
+          <span className="w-5 h-[1.5px] bg-theme-primary"></span>
+          {t.contactTitle}
         </h2>
 
         {/* Tab switch between Form and Sent Messages */}
@@ -70,7 +74,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
             }`}
           >
             <Mail className="w-3.5 h-3.5" />
-            <span>填寫表單</span>
+            <span>{t.formTab}</span>
           </button>
           <button
             onClick={() => setActiveTab('history')}
@@ -81,7 +85,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>已發送訊息 ({messages.length})</span>
+            <span>{t.sentTab} ({messages.length})</span>
           </button>
         </div>
       </div>
@@ -94,9 +98,9 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
                 <CheckCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-zinc-900">訊息已成功送出！</h3>
+                <h3 className="text-lg font-bold text-zinc-900">{t.msgSuccessTitle}</h3>
                 <p className="text-xs text-zinc-500 mt-1 max-w-sm">
-                  感謝您的來信，我已經收到您的訊息，通常會在 24 小時內回覆您。
+                  {t.msgSuccessDesc}
                 </p>
               </div>
               <div className="flex items-center gap-3 pt-2">
@@ -104,13 +108,13 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
                   onClick={() => setSubmitted(false)}
                   className="px-5 py-2.5 bg-zinc-900 text-white text-xs font-bold uppercase tracking-wider rounded hover:bg-black transition-colors"
                 >
-                  再發送一則訊息
+                  {t.sendAnotherBtn}
                 </button>
                 <button
                   onClick={() => setActiveTab('history')}
                   className="px-5 py-2.5 border border-zinc-200 text-zinc-700 text-xs font-bold rounded hover:bg-zinc-50 transition-colors"
                 >
-                  查看已發送紀錄
+                  {t.viewSentHistoryBtn}
                 </button>
               </div>
             </div>
@@ -119,14 +123,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
               {/* Name */}
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                  您的姓名 <span className="text-red-500">*</span>
+                  {t.yourNameLabel} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="例如：林先生 / Ms. Chen"
+                  placeholder={lang === 'en' ? 'e.g., Alex Chen' : '例如：林先生 / Ms. Chen'}
                   className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded text-sm outline-none focus:border-zinc-500 transition-colors"
                 />
               </div>
@@ -134,7 +138,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
               {/* Email */}
               <div className="space-y-2">
                 <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                  電子郵件 <span className="text-red-500">*</span>
+                  {t.yourEmailLabel} <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -149,13 +153,13 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
               {/* Subject */}
               <div className="sm:col-span-2 space-y-2">
                 <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                  主旨 / 主題
+                  {t.subjectLabel}
                 </label>
                 <input
                   type="text"
                   value={formData.subject}
                   onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  placeholder="例如：合作洽談 / 專案諮詢"
+                  placeholder={lang === 'en' ? 'e.g., Project Opportunity / Consulting' : '例如：合作洽談 / 專案諮詢'}
                   className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded text-sm outline-none focus:border-zinc-500 transition-colors"
                 />
               </div>
@@ -163,14 +167,14 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
               {/* Message */}
               <div className="sm:col-span-2 space-y-2 flex flex-col flex-1">
                 <label className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider">
-                  訊息內容 <span className="text-red-500">*</span>
+                  {t.messageLabel} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   required
                   rows={4}
                   value={formData.message}
                   onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  placeholder="請輸入您的詳細需求或想交流的內容..."
+                  placeholder={lang === 'en' ? 'Write your message details here...' : '請輸入您的詳細需求或想交流的內容...'}
                   className="w-full p-3 bg-zinc-50 border border-zinc-200 rounded text-sm outline-none focus:border-zinc-500 transition-colors flex-1 resize-none"
                 ></textarea>
               </div>
@@ -179,10 +183,10 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
               <div className="sm:col-span-2 pt-2">
                 <button
                   type="submit"
-                  className="w-full py-4 bg-zinc-900 text-white text-xs font-bold uppercase tracking-[0.2em] rounded hover:bg-black transition-colors flex items-center justify-center gap-2 shadow-sm"
+                  className="w-full py-4 bg-theme-primary bg-theme-primary-hover text-white text-xs font-bold uppercase tracking-[0.2em] rounded transition-colors flex items-center justify-center gap-2 shadow-sm"
                 >
                   <Send className="w-3.5 h-3.5" />
-                  <span>送出訊息 (Send Message)</span>
+                  <span>{t.sendMessageBtn}</span>
                 </button>
               </div>
             </form>
@@ -192,14 +196,16 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
         /* History View */
         <div className="bg-white border border-zinc-200 p-6 rounded-lg shadow-xs space-y-4 flex-1">
           <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
-            <span className="text-xs font-mono text-zinc-400">本地已紀錄訊息 (Simulated Inbox)</span>
+            <span className="text-xs font-mono text-zinc-400">
+              {lang === 'en' ? 'Locally Stored Messages (Simulated Inbox)' : '本地已紀錄訊息 (Simulated Inbox)'}
+            </span>
             {messages.length > 0 && (
               <button
                 onClick={handleClearHistory}
                 className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>清除紀錄</span>
+                <span>{lang === 'en' ? 'Clear Messages' : '清除紀錄'}</span>
               </button>
             )}
           </div>
@@ -207,7 +213,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
           {messages.length === 0 ? (
             <div className="py-12 text-center text-zinc-400 space-y-2">
               <MessageSquare className="w-8 h-8 mx-auto stroke-1" />
-              <p className="text-xs">尚無任何發送紀錄，歡迎切換至表單送出訊息！</p>
+              <p className="text-xs">{t.noMessagesYet}</p>
             </div>
           ) : (
             <div className="space-y-4">
@@ -221,7 +227,7 @@ export const ContactSection: React.FC<ContactSectionProps> = ({ onSendMessage })
                     </span>
                   </div>
                   <p className="text-xs font-medium text-zinc-700 border-b border-zinc-200/60 pb-1">
-                    主旨：{m.subject}
+                    {lang === 'en' ? 'Subject: ' : '主旨：'}{m.subject}
                   </p>
                   <p className="text-xs text-zinc-600 leading-relaxed whitespace-pre-wrap">{m.message}</p>
                 </div>

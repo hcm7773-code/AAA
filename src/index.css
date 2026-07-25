@@ -1,5 +1,46 @@
 @import "tailwindcss";
 
+:root {
+  --theme-primary: #18181b;
+  --theme-primary-hover: #09090b;
+  --theme-accent: #3f3f46;
+  --theme-accent-light: #f4f4f5;
+  --theme-ring: #a1a1aa;
+}
+
+/* Custom Theme Helper Utilities */
+.bg-theme-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+.bg-theme-primary-hover:hover {
+  background-color: var(--theme-primary-hover) !important;
+}
+
+.bg-theme-accent {
+  background-color: var(--theme-accent) !important;
+}
+
+.bg-theme-accent-light {
+  background-color: var(--theme-accent-light) !important;
+}
+
+.text-theme-primary {
+  color: var(--theme-primary) !important;
+}
+
+.text-theme-accent {
+  color: var(--theme-accent) !important;
+}
+
+.border-theme-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+.border-theme-accent {
+  border-color: var(--theme-accent) !important;
+}
+
 @page {
   size: auto;
   margin: 20mm;
@@ -24,6 +65,25 @@
   section, article, .card, [class*="rounded"] {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+  #resume-app-container {
+    position: relative !important;
+  }
+  #resume-app-container::after {
+    content: attr(data-print-date);
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    font-size: 10px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 600;
+    color: #52525b;
+    background-color: #fafafa;
+    border: 1px solid #d4d4d8;
+    padding: 3px 8px;
+    border-radius: 4px;
+    z-index: 9999;
+    letter-spacing: 0.025em;
   }
 }
 

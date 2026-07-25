@@ -4,9 +4,13 @@ export interface ProfileData {
   avatarInitials: string;
   avatarUrl?: string;
   title: string;
+  titleEn?: string;
   company: string;
+  companyEn?: string;
   location: string;
+  locationEn?: string;
   bio: string;
+  bioEn?: string;
   email: string;
   phone: string;
   github: string;
@@ -22,15 +26,22 @@ export interface ExperienceItem {
   id: string;
   period: string;
   role: string;
+  roleEn?: string;
   company: string;
+  companyEn?: string;
   description: string;
+  descriptionEn?: string;
   highlights: string[];
+  highlightsEn?: string[];
   skills: string[];
   type: 'work' | 'education';
+  achievements?: string[];
+  achievementsEn?: string[];
 }
 
 export interface SkillCategory {
   category: string;
+  categoryEn?: string;
   skills: {
     name: string;
     level: number; // 1-100
@@ -42,14 +53,17 @@ export interface SkillCategory {
 export interface ProjectItem {
   id: string;
   title: string;
+  titleEn?: string;
   category: 'Frontend' | 'Fullstack' | 'UI/UX' | 'Mobile';
   description: string;
+  descriptionEn?: string;
   tags: string[];
   year: string;
   imageUrl: string;
   link?: string;
   githubUrl?: string;
   details?: string;
+  detailsEn?: string;
 }
 
 export interface ContactMessage {

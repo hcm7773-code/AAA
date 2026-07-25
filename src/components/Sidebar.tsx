@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { ProfileData } from '../types';
+import { Language, translations } from '../data/translations';
+import { ThemeId } from '../data/themes';
+import { ThemePicker } from './ThemePicker';
 import { 
   Github, 
   Linkedin, 
@@ -10,15 +13,18 @@ import {
   Edit3, 
   Check, 
   Copy, 
-  Briefcase, 
   ExternalLink,
-  Sparkles,
   Eye,
-  Rss
+  Rss,
+  Languages
 } from 'lucide-react';
 
 interface SidebarProps {
   profile: ProfileData;
+  lang: Language;
+  themeId?: ThemeId;
+  onSelectTheme?: (themeId: ThemeId) => void;
+  onToggleLang: (lang: Language) => void;
   onEditProfileClick: () => void;
   onQuickContactClick: () => void;
   onExportPDF: () => void;
@@ -27,12 +33,17 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   profile,
+  lang,
+  themeId,
+  onSelectTheme,
+  onToggleLang,
   onEditProfileClick,
   onQuickContactClick,
   onExportPDF,
   onPreviewPrint,
 }) => {
   const [copied, setCopied] = useState(false);
+  const t = translations[lang];
 
   const handleCopyEmail = async () => {
     try {
@@ -55,6 +66,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  const bioText = lang === 'en' ? (profile.bioEn || profile.bio) : profile.bio;
+  const locationText = lang === 'en' ? (profile.locationEn || profile.location) : profile.location;
+  const companyText = lang === 'en' ? (profile.companyEn || profile.company) : profile.company;
+  const titleText = lang === 'en' ? (profile.titleEn || profile.title) : profile.title;
+
   return (
     <aside className="w-full lg:w-[320px] bg-white border-b lg:border-b-0 lg:border-r border-zinc-200 p-6 sm:p-8 lg:p-10 flex flex-col shrink-0">
       {/* Top Profile Header */}
@@ -67,42 +83,85 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {profile.openToWork && (
               <span className="absolute bottom-1 right-1 flex h-4 w-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white" title="Open to Opportunities"></span>
+                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-white" title={t.openToWork}></span>
               </span>
             )}
           </div>
 
-          <button
-            onClick={onEditProfileClick}
-            className="p-2 text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 rounded-md transition-colors text-xs flex items-center gap-1 border border-zinc-200"
-            title="編輯個人資料"
-          >
-            <Edit3 className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">編輯</span>
-          </button>
+          <div className="flex items-center gap-1.5 no-print flex-wrap justify-end">
+            {/* Theme Selector if provided */}
+            {themeId && onSelectTheme && (
+              <ThemePicker
+                currentThemeId={themeId}
+                onSelectTheme={onSelectTheme}
+                lang={lang}
+                compact={true}
+              />
+            )}
+
+            {/* Language Toggle Button */}
+            <div className="flex items-center bg-zinc-100 p-0.5 rounded border border-zinc-200 text-xs font-mono">
+              <button
+                type="button"
+                onClick={() => onToggleLang('zh')}
+                className={`px-2 py-1 rounded transition-colors ${lang === 'zh' ? 'bg-theme-primary text-white font-bold shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'}`}
+                title="切換至繁體中文"
+              >
+                中
+              </button>
+              <button
+                type="button"
+                onClick={() => onToggleLang('en')}
+                className={`px-2 py-1 rounded transition-colors ${lang === 'en' ? 'bg-theme-primary text-white font-bold shadow-2xs' : 'text-zinc-500 hover:text-zinc-900'}`}
+                title="Switch to English"
+              >
+                EN
+              </button>
+            </div>
+
+            <button
+              onClick={onEditProfileClick}
+              className="p-1.5 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded transition-colors text-xs flex items-center gap-1 border border-zinc-200"
+              title={t.editProfile}
+            >
+              <Edit3 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{t.edit}</span>
+            </button>
+          </div>
         </div>
 
         <h1 className="text-2xl font-bold tracking-tight mb-1 text-zinc-900 flex items-center gap-2">
-          {profile.name}
-          <span className="text-xs font-normal text-zinc-400 font-mono">({profile.englishName})</span>
+          {lang === 'en' ? profile.englishName : profile.name}
+          <span className="text-xs font-normal text-zinc-400 font-mono">
+            ({lang === 'en' ? profile.name : profile.englishName})
+          </span>
         </h1>
-        <p className="text-zinc-500 text-xs sm:text-sm font-medium uppercase tracking-widest mt-1">
-          {profile.title}
-        </p>
+        
+        {/* Role Title */}
+        <div className="mt-1 space-y-1">
+          <p className="text-zinc-800 text-xs sm:text-sm font-bold tracking-wide">
+            {titleText}
+          </p>
+          {lang === 'zh' && profile.titleEn && (
+            <p className="text-[11px] text-zinc-400 font-mono tracking-wider uppercase">
+              {profile.titleEn}
+            </p>
+          )}
+        </div>
 
         <div className="mt-3 flex items-center gap-2 text-xs text-zinc-500">
           <MapPin className="w-3.5 h-3.5 text-zinc-400" />
-          <span>{profile.location}</span>
+          <span>{locationText}</span>
           <span className="text-zinc-300">•</span>
           {profile.openToWork ? (
             <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded text-[11px] font-medium border border-emerald-200">
               <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-              尋找新機會中
+              {t.openToWork}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1 text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded text-[11px] font-medium border border-zinc-200">
               <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full"></span>
-              穩定任職中
+              {t.employed}
             </span>
           )}
         </div>
@@ -114,22 +173,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <section>
           <h2 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <span className="w-1.5 h-1.5 bg-zinc-400 rounded-full"></span>
-            個人簡介
+            {t.bioHeader}
           </h2>
           <p className="text-sm leading-relaxed text-zinc-600 bg-zinc-50/70 p-3.5 rounded-lg border border-zinc-100">
-            {profile.bio}
+            {bioText}
           </p>
         </section>
 
         {/* Highlight Quick Stats */}
         <section className="grid grid-cols-2 gap-3">
           <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/80">
-            <p className="text-[10px] text-zinc-400 uppercase font-mono">業界資歷</p>
-            <p className="text-lg font-bold text-zinc-900 mt-0.5">{profile.yearsExperience}+ 年</p>
+            <p className="text-[10px] text-zinc-400 uppercase font-mono">{t.yearsExperience}</p>
+            <p className="text-lg font-bold text-zinc-900 mt-0.5">{profile.yearsExperience}+ {t.yearsUnit}</p>
           </div>
           <div className="bg-zinc-50 p-3 rounded-lg border border-zinc-200/80">
-            <p className="text-[10px] text-zinc-400 uppercase font-mono">完成專案</p>
-            <p className="text-lg font-bold text-zinc-900 mt-0.5">{profile.completedProjects}+ 個</p>
+            <p className="text-[10px] text-zinc-400 uppercase font-mono">{t.completedProjects}</p>
+            <p className="text-lg font-bold text-zinc-900 mt-0.5">{profile.completedProjects}+ {t.projectsUnit}</p>
           </div>
         </section>
 
@@ -137,9 +196,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">
-              社群與聯絡方式
+              {t.contactHeader}
             </h2>
-            {/* Quick Icon Strip */}
             <div className="flex items-center gap-1.5 no-print">
               {profile.github && (
                 <a
@@ -180,7 +238,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-1 text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 rounded transition-colors"
-                  title="Personal Blog / Website"
+                  title="Personal Blog"
                 >
                   <Rss className="w-3.5 h-3.5" />
                 </a>
@@ -247,7 +305,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 >
                   <span className="flex items-center gap-2.5">
                     <Rss className="w-4 h-4 text-zinc-700" />
-                    <span>個人網站 / 部落格</span>
+                    <span>{lang === 'en' ? 'Personal Website / Blog' : '個人網站 / 部落格'}</span>
                   </span>
                   <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
                 </a>
@@ -273,41 +331,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {copied ? (
                   <>
                     <Check className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>已複製 Email</span>
+                    <span>{t.emailCopied}</span>
                   </>
                 ) : (
                   <>
                     <Copy className="w-3.5 h-3.5 text-zinc-400" />
-                    <span>複製信箱</span>
+                    <span>{t.copyEmail}</span>
                   </>
                 )}
               </button>
               <button
                 onClick={onQuickContactClick}
                 className="py-2 px-3 bg-white text-zinc-900 hover:bg-zinc-100 text-xs font-bold rounded transition-colors flex items-center justify-center gap-1"
-                title="跳轉至聯絡表單"
+                title={t.quickContactBtn}
               >
-                <span>發信</span>
+                <span>{lang === 'en' ? 'Contact' : '發信'}</span>
               </button>
             </div>
 
-            {/* Action Buttons: PDF Export & Print Preview */}
+            {/* Action Buttons */}
             <div className="grid grid-cols-2 gap-2 mt-2">
               <button
                 onClick={onPreviewPrint}
                 className="py-2.5 px-2 bg-zinc-100 hover:bg-white text-zinc-800 text-xs font-bold rounded transition-colors flex items-center justify-center gap-1.5 border border-zinc-200 shadow-xs hover:border-zinc-300"
-                title="預覽純白極簡列印格式"
               >
                 <Eye className="w-3.5 h-3.5 text-zinc-600" />
-                <span>預覽列印格式</span>
+                <span>{t.previewPrint}</span>
               </button>
               <button
                 onClick={onExportPDF}
-                className="py-2.5 px-2 bg-zinc-900 hover:bg-black text-white text-xs font-bold rounded transition-colors flex items-center justify-center gap-1.5 shadow-xs"
-                title="直接下載 PDF 檔案"
+                className="py-2.5 px-2 bg-theme-primary bg-theme-primary-hover text-white text-xs font-bold rounded transition-colors flex items-center justify-center gap-1.5 shadow-xs"
               >
                 <Download className="w-3.5 h-3.5" />
-                <span>下載 PDF</span>
+                <span>{t.downloadPDF}</span>
               </button>
             </div>
           </div>
@@ -316,14 +372,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Footer copyright */}
       <div className="mt-8 pt-6 border-t border-zinc-100 flex items-center justify-between text-[11px] text-zinc-400">
-        <p className="font-mono italic">© {new Date().getFullYear()} {profile.name}</p>
+        <p className="font-mono italic">© {new Date().getFullYear()} {lang === 'en' ? profile.englishName : profile.name}</p>
         <button
           onClick={onExportPDF}
           className="flex items-center gap-1 hover:text-zinc-800 transition-colors font-medium text-zinc-600"
-          title="匯出 PDF 簡歷"
         >
           <Download className="w-3 h-3 text-zinc-500" />
-          <span>匯出 PDF</span>
+          <span>{t.downloadPDF}</span>
         </button>
       </div>
     </aside>

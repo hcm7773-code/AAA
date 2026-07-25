@@ -66,17 +66,32 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
             </div>
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-zinc-400 uppercase mb-1">
-              職稱 / Role Title
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded outline-none focus:border-zinc-500"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[11px] font-bold text-zinc-400 uppercase mb-1">
+                中文職稱 / Chinese Title
+              </label>
+              <input
+                type="text"
+                required
+                placeholder="例如：高級資深前端架構師"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded outline-none focus:border-zinc-500"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-bold text-zinc-400 uppercase mb-1">
+                英文職稱 / English Title
+              </label>
+              <input
+                type="text"
+                placeholder="例如：Senior Frontend Architect"
+                value={formData.titleEn || ''}
+                onChange={(e) => setFormData({ ...formData, titleEn: e.target.value })}
+                className="w-full p-2.5 bg-zinc-50 border border-zinc-200 rounded outline-none focus:border-zinc-500"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -264,7 +279,7 @@ export const ProfileEditModal: React.FC<ProfileEditModalProps> = ({
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-zinc-900 text-white text-xs font-bold rounded hover:bg-black flex items-center gap-1.5"
+                className="px-4 py-2 bg-theme-primary bg-theme-primary-hover text-white text-xs font-bold rounded flex items-center gap-1.5"
               >
                 <Save className="w-3.5 h-3.5" />
                 <span>儲存修改</span>
