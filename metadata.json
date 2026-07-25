@@ -1,0 +1,6 @@
+{
+  "name": "個人簡歷與作品集",
+  "description": "簡潔優雅的個人自我介紹網頁，包含簡歷、經歷、技能清單與互動聯絡表單。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
