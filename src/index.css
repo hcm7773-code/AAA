@@ -1,7 +1,12 @@
 @import "tailwindcss";
 
+@page {
+  size: auto;
+  margin: 20mm;
+}
+
 @media print {
-  header, nav, button, input, .fixed {
+  header, nav, button, input, .fixed, .no-print {
     display: none !important;
   }
   body {
@@ -10,9 +15,15 @@
   }
   main {
     padding: 0 !important;
+    background: white !important;
   }
   aside {
     border: none !important;
     padding: 0 !important;
   }
+  section, article, .card, [class*="rounded"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
+
