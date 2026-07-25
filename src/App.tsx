@@ -16,7 +16,7 @@ import {
   initialProjects,
 } from './data/profileData';
 import { ProfileData } from './types';
-import { User, Briefcase, Code, FolderGit2, Mail, Sparkles, Download, Loader2, Eye, Printer, X, FileText } from 'lucide-react';
+import { User, Briefcase, Code, FolderGit2, Mail, Sparkles, Download, Loader2, Eye, Printer, X, FileText, Menu } from 'lucide-react';
 
 const STORAGE_KEY = 'minimal_resume_profile_v1';
 const EXP_STORAGE_KEY = 'minimal_resume_experiences_v1';
@@ -92,8 +92,33 @@ export default function App() {
   const [exportStatus, setExportStatus] = useState<string>('');
   const [isPreviewMode, setIsPreviewMode] = useState<boolean>(false);
 
+  // Responsive Sidebar auto collapse/expand state
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 1024;
+    }
+    return true;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setIsSidebarOpen(true);
+      } else {
+        setIsSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const handleQuickContact = () => {
     setActiveTab('contact');
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setIsSidebarOpen(false);
+    }
     const contactElement = document.getElementById('contact-section');
     if (contactElement) {
       contactElement.scrollIntoView({ behavior: 'smooth' });
@@ -169,28 +194,47 @@ export default function App() {
 
       {/* Top Mobile Bar */}
       {!isPreviewMode && (
-        <header className="lg:hidden bg-white border-b border-zinc-200 p-4 sticky top-0 z-30 flex items-center justify-between shadow-xs no-print">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-zinc-900 text-white rounded-full flex items-center justify-center font-bold text-xs">
-              {profile.avatarInitials}
-            </div>
-            <div>
-              <h1 className="font-bold text-sm text-zinc-900">{profile.name}</h1>
-              <p className="text-[11px] text-zinc-500">{profile.title.split('/')[0]}</p>
+        <header className="lg:hidden bg-white border-b border-zinc-200 p-3 sm:p-4 sticky top-0 z-30 flex items-center justify-between shadow-2xs no-print">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Hamburger Toggle Button */}
+            <button
+              onClick={() => setIsSidebarOpen((prev) => !prev)}
+              className={`px-2.5 py-1.5 rounded-lg border transition-all flex items-center justify-center gap-1.5 text-xs font-bold ${
+                isSidebarOpen
+                  ? 'bg-zinc-900 text-white border-zinc-900 shadow-2xs'
+                  : 'bg-zinc-100 hover:bg-zinc-200 text-zinc-800 border-zinc-200'
+              }`}
+              title={isSidebarOpen ? '收合個人資料選單' : '展開個人資料選單'}
+              aria-label="Toggle Navigation Menu"
+            >
+              {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+              <span className="text-[11px] font-bold">
+                {isSidebarOpen ? '收合' : '選單'}
+              </span>
+            </button>
+
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-theme-primary text-white rounded-full flex items-center justify-center font-bold text-xs shadow-2xs">
+                {profile.avatarInitials}
+              </div>
+              <div className="hidden min-[360px]:block">
+                <h1 className="font-bold text-xs sm:text-sm text-zinc-900 leading-snug">{profile.name}</h1>
+                <p className="text-[10px] text-zinc-500 leading-none">{profile.title.split('/')[0]}</p>
+              </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               onClick={handleTogglePreviewMode}
               className="px-2.5 py-1.5 bg-zinc-100 hover:bg-zinc-200 text-zinc-800 rounded text-xs font-medium border border-zinc-200 transition-colors flex items-center gap-1"
             >
               <Eye className="w-3 h-3 text-zinc-600" />
-              <span>預覽</span>
+              <span className="hidden min-[400px]:inline">預覽</span>
             </button>
             <button
               onClick={handleExportPDF}
-              className="px-2.5 py-1.5 bg-zinc-900 hover:bg-black text-white rounded text-xs font-bold transition-colors flex items-center gap-1"
+              className="px-2.5 py-1.5 bg-theme-primary bg-theme-primary-hover text-white rounded text-xs font-bold transition-colors flex items-center gap-1 shadow-2xs"
             >
               <Download className="w-3 h-3" />
               <span>PDF</span>
@@ -205,18 +249,26 @@ export default function App() {
         data-print-date={`簡歷版本：${new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: '2-digit', day: '2-digit' })} (Printed)`}
         className={`flex-1 flex flex-col lg:flex-row max-w-[1440px] w-full mx-auto my-0 bg-white overflow-hidden ${isPreviewMode ? 'shadow-none rounded-none border-none' : 'shadow-2xl lg:my-4 lg:rounded-xl border border-zinc-200/80'}`}
       >
-        {/* Left Sidebar */}
-        <Sidebar
-          profile={profile}
-          lang={lang}
-          themeId={themeId}
-          onSelectTheme={setThemeId}
-          onToggleLang={() => setLang(lang === 'zh' ? 'en' : 'zh')}
-          onEditProfileClick={() => setIsEditModalOpen(true)}
-          onQuickContactClick={handleQuickContact}
-          onExportPDF={handleExportPDF}
-          onPreviewPrint={handleTogglePreviewMode}
-        />
+        {/* Left Sidebar - Responsive Auto-collapse / Hamburger toggle */}
+        <div
+          className={`transition-all duration-300 ease-in-out ${
+            isSidebarOpen
+              ? 'block w-full lg:w-[320px] shrink-0'
+              : 'hidden lg:block lg:w-[320px] shrink-0'
+          }`}
+        >
+          <Sidebar
+            profile={profile}
+            lang={lang}
+            themeId={themeId}
+            onSelectTheme={setThemeId}
+            onToggleLang={() => setLang(lang === 'zh' ? 'en' : 'zh')}
+            onEditProfileClick={() => setIsEditModalOpen(true)}
+            onQuickContactClick={handleQuickContact}
+            onExportPDF={handleExportPDF}
+            onPreviewPrint={handleTogglePreviewMode}
+          />
+        </div>
 
         {/* Right Main Content Area */}
         <main className={`flex-1 p-6 sm:p-8 lg:p-12 flex flex-col gap-10 overflow-y-auto ${isPreviewMode ? 'bg-white' : 'bg-[#F4F4F5]/60'}`}>
