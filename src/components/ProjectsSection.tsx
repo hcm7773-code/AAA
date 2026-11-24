@@ -1,245 +1,306 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { ExternalLink, Github, Search, X, Layers } from 'lucide-react';
 import { ProjectItem } from '../types';
 import { Language, translations } from '../data/translations';
-import { FolderGit2, ExternalLink, Github, Eye, X } from 'lucide-react';
 
 interface ProjectsSectionProps {
   projects: ProjectItem[];
-  lang?: Language;
+  language: Language;
+  isPreviewMode?: boolean;
 }
 
-export const ProjectsSection: React.FC<ProjectsSectionProps> = ({ projects, lang = 'zh' }) => {
-  const [activeCategory, setActiveCategory] = useState<string>('All');
-  const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>('');
+const CATEGORIES: Array<'All' | ProjectItem['category']> = [
+  'All',
+  'Frontend',
+  'Fullstack',
+  'UI/UX',
+  'Mobile',
+];
 
-  const t = translations[lang];
-  const categories = ['All', 'Frontend', 'Fullstack', 'UI/UX'];
+export const ProjectsSection: React.FC<ProjectsSectionProps> = ({
+  projects,
+  language,
+  isPreviewMode = false,
+}) => {
+  const [selectedCategory, setSelectedCategory] = useState<'All' | ProjectItem['category']>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeProject, setActiveProject] = useState<ProjectItem | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
-  const filteredProjects = projects.filter((p) => {
-    const matchesCategory = activeCategory === 'All' || p.category === activeCategory;
-    const titleStr = lang === 'en' ? (p.titleEn || p.title) : p.title;
-    const descStr = lang === 'en' ? (p.descriptionEn || p.description) : p.description;
+  const t = translations[language];
 
-    const matchesSearch =
-      searchQuery === '' ||
-      titleStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      descStr.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.tags.some((tag) => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-
-    return matchesCategory && matchesSearch;
-  });
+  const filteredProjects = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return projects.filter((proj) => {
+      if (selectedCategory !== 'All' && proj.category !== selectedCategory) return false;
+      if (!q) return true;
+      const title = (language === 'en' && proj.titleEn ? proj.titleEn : proj.title).toLowerCase();
+      const desc = (
+        language === 'en' && proj.descriptionEn ? proj.descriptionEn : proj.description
+      ).toLowerCase();
+      const tagMatch = proj.tags.some((tag) => tag.toLowerCase().includes(q));
+      return title.includes(q) || desc.includes(q) || tagMatch;
+    });
+  }, [projects, selectedCategory, searchQuery, language]);
 
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/80">
-        <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2 tracking-tight">
-          <span className="w-5 h-[1.5px] bg-theme-primary"></span>
-          {t.projectsTitle}
-        </h2>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Categories Tabs */}
-          <div className="flex items-center gap-1 bg-zinc-100 p-1 rounded-lg border border-zinc-200 text-xs font-medium self-start sm:self-auto">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-3 py-1 rounded transition-colors ${
-                  activeCategory === cat
-                    ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                    : 'text-zinc-500 hover:text-zinc-900'
-                }`}
-              >
-                {cat === 'All' ? (lang === 'en' ? 'All' : '全部作品') : cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Search Box */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={t.searchProjectsPlaceholder}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-zinc-500 w-full sm:w-44 transition-colors"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+    <section id="section-projects" className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+            {t.projectsTitle}
+          </h2>
+          <p className="text-sm text-zinc-500 mt-1">{t.projectsSubtitle}</p>
         </div>
+
+        {!isPreviewMode && (
+          <div className="flex flex-wrap items-center gap-1 rounded-lg border border-zinc-200 bg-white p-0.5 self-start no-print">
+            {CATEGORIES.map((cat) => {
+              const active = selectedCategory === cat;
+              const label = cat === 'All' ? t.filterAll : cat;
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                    active
+                      ? 'bg-theme-primary text-white shadow-xs'
+                      : 'text-zinc-600 hover:text-zinc-900'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Projects Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredProjects.map((project) => {
-          const titleStr = lang === 'en' ? (project.titleEn || project.title) : project.title;
-          const descStr = lang === 'en' ? (project.descriptionEn || project.description) : project.description;
+      {!isPreviewMode && (
+        <div className="relative no-print">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t.searchProjectPlaceholder}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+          />
+        </div>
+      )}
 
-          return (
-            <div
-              key={project.id}
-              className="group bg-white border border-zinc-200 rounded-lg overflow-hidden flex flex-col justify-between hover:border-zinc-400 hover:shadow-md hover:-translate-y-1 transition-all duration-300 shadow-xs"
-            >
-              <div>
-                {/* Image Thumbnail */}
-                <div className="relative aspect-video bg-zinc-100 overflow-hidden border-b border-zinc-200">
-                  <img
-                    src={project.imageUrl}
-                    alt={titleStr}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute top-3 right-3 bg-zinc-900/80 backdrop-blur-xs text-white text-[10px] font-mono px-2.5 py-1 rounded uppercase tracking-wider">
-                    {project.year}
+      {filteredProjects.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-10 text-center text-sm text-zinc-500">
+          {t.noProjectMatch}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {filteredProjects.map((project) => {
+            const title = language === 'en' && project.titleEn ? project.titleEn : project.title;
+            const description =
+              language === 'en' && project.descriptionEn
+                ? project.descriptionEn
+                : project.description;
+
+            return (
+              <article
+                key={project.id}
+                onClick={() => !isPreviewMode && setActiveProject(project)}
+                className={`group rounded-2xl border border-zinc-200/90 bg-white overflow-hidden shadow-xs transition-all ${
+                  !isPreviewMode ? 'hover:border-zinc-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer' : ''
+                }`}
+              >
+                <div className="aspect-video w-full bg-zinc-100 overflow-hidden relative border-b border-zinc-100">
+                  {failedImages[project.id] ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-100 text-zinc-400 p-4 text-center">
+                      <Layers className="w-8 h-8 mb-2 opacity-60" />
+                      <span className="text-xs font-medium text-zinc-500">{title}</span>
+                    </div>
+                  ) : (
+                    <img
+                      src={project.imageUrl}
+                      alt={title}
+                      referrerPolicy="no-referrer"
+                      onError={() =>
+                        setFailedImages((prev) => ({ ...prev, [project.id]: true }))
+                      }
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                    />
+                  )}
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    <span className="px-2.5 py-1 rounded-md bg-white/95 backdrop-blur-xs border border-zinc-200/80 text-[11px] font-semibold text-zinc-800 shadow-xs">
+                      {project.category}
+                    </span>
+                    <span className="px-2 py-1 rounded-md bg-zinc-900/85 text-[11px] font-mono-tech font-medium text-white">
+                      {project.year}
+                    </span>
                   </div>
                 </div>
 
-                {/* Card Body */}
-                <div className="p-5">
-                  <div className="flex items-center gap-2 text-[11px] font-mono text-zinc-400 mb-1">
-                    <FolderGit2 className="w-3.5 h-3.5" />
-                    <span>{project.category}</span>
+                <div className="p-5 space-y-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-base font-bold text-zinc-900 group-hover:text-theme-primary transition-colors">
+                      {title}
+                    </h3>
                   </div>
 
-                  <h3 className="text-base font-bold text-zinc-900 group-hover:text-black transition-colors mb-2">
-                    {titleStr}
-                  </h3>
-
-                  <p className="text-xs text-zinc-600 line-clamp-2 leading-relaxed mb-4">
-                    {descStr}
+                  <p className="text-sm text-zinc-600 leading-relaxed line-clamp-2">
+                    {description}
                   </p>
 
-                  {/* Tech Tags */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {project.tags.map((tag, tIdx) => (
+                  <div className="flex flex-wrap gap-1.5 pt-1">
+                    {project.tags.slice(0, 4).map((tag) => (
                       <span
-                        key={tIdx}
-                        className="px-2 py-0.5 bg-zinc-100 text-zinc-600 border border-zinc-200/80 rounded text-[10px] font-mono"
+                        key={tag}
+                        className="px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-xs font-medium"
                       >
                         {tag}
                       </span>
                     ))}
                   </div>
-                </div>
-              </div>
 
-              {/* Footer Actions */}
-              <div className="px-5 py-3.5 bg-zinc-50 border-t border-zinc-100 flex items-center justify-between text-xs">
-                <button
-                  onClick={() => setSelectedProject(project)}
-                  className="text-zinc-700 hover:text-black font-medium flex items-center gap-1 hover:underline"
-                >
-                  <Eye className="w-3.5 h-3.5" />
-                  <span>{lang === 'en' ? 'View Details' : '檢視專案細節'}</span>
-                </button>
-
-                <div className="flex items-center gap-3 text-zinc-500">
-                  {project.githubUrl && (
-                    <a
-                      href={project.githubUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-black transition-colors"
-                      title="GitHub Repository"
-                    >
-                      <Github className="w-4 h-4" />
-                    </a>
+                  {!isPreviewMode && (
+                    <div className="pt-2 flex items-center justify-between border-t border-zinc-100 no-print">
+                      <span className="text-xs font-semibold text-theme-primary">
+                        {t.viewDetails} →
+                      </span>
+                      <div
+                        className="flex items-center gap-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {project.githubUrl && (
+                          <a
+                            href={project.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                            aria-label={t.sourceCode}
+                          >
+                            <Github className="w-4 h-4" />
+                          </a>
+                        )}
+                        {project.link && (
+                          <a
+                            href={project.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                            aria-label={t.liveDemo}
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   )}
-                  {project.link && (
-                    <a
-                      href={project.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-black transition-colors"
-                      title="Live Preview"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
                 </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
 
-      {/* Project Detail Modal */}
-      {selectedProject && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
-          <div className="bg-white border border-zinc-200 rounded-lg max-w-xl w-full p-6 space-y-5 relative shadow-2xl">
-            <button
-              onClick={() => setSelectedProject(null)}
-              className="absolute top-4 right-4 p-1.5 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-md transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="aspect-video bg-zinc-100 rounded-md overflow-hidden border border-zinc-200">
+      {/* Project Details Modal */}
+      {activeProject && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-900/55 backdrop-blur-xs no-print"
+          onClick={() => setActiveProject(null)}
+        >
+          <div
+            className="bg-white rounded-2xl border border-zinc-200 shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="relative aspect-video bg-zinc-100 border-b border-zinc-200">
               <img
-                src={selectedProject.imageUrl}
-                alt={lang === 'en' ? (selectedProject.titleEn || selectedProject.title) : selectedProject.title}
+                src={activeProject.imageUrl}
+                alt={
+                  language === 'en' && activeProject.titleEn
+                    ? activeProject.titleEn
+                    : activeProject.title
+                }
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <span className="text-xs font-mono text-zinc-400 uppercase">
-                  {selectedProject.category} • {selectedProject.year}
-                </span>
-              </div>
-              <h3 className="text-xl font-bold text-zinc-900">
-                {lang === 'en' ? (selectedProject.titleEn || selectedProject.title) : selectedProject.title}
-              </h3>
-            </div>
-
-            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
-              {lang === 'en' 
-                ? (selectedProject.detailsEn || selectedProject.details || selectedProject.descriptionEn || selectedProject.description) 
-                : (selectedProject.details || selectedProject.description)}
-            </p>
-
-            <div className="space-y-2">
-              <p className="text-xs font-bold text-zinc-400 uppercase">
-                {lang === 'en' ? 'Key Technologies' : '核心使用技術'}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {selectedProject.tags.map((t, idx) => (
-                  <span
-                    key={idx}
-                    className="px-2.5 py-1 bg-zinc-100 text-zinc-800 border border-zinc-200 rounded text-xs font-mono"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-zinc-100 flex items-center justify-end gap-3">
               <button
-                onClick={() => setSelectedProject(null)}
-                className="px-4 py-2 border border-zinc-200 text-xs font-medium rounded hover:bg-zinc-50 transition-colors"
+                type="button"
+                onClick={() => setActiveProject(null)}
+                className="absolute top-3 right-3 p-2 rounded-full bg-white/95 text-zinc-700 hover:text-zinc-900 shadow-md cursor-pointer"
+                aria-label={t.closeModal}
               >
-                {lang === 'en' ? 'Close' : '關閉'}
+                <X className="w-4 h-4" />
               </button>
-              {selectedProject.link && (
-                <a
-                  href={selectedProject.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2 bg-zinc-900 text-white text-xs font-bold rounded hover:bg-black transition-colors flex items-center gap-1.5"
-                >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>{lang === 'en' ? 'Visit Live Demo' : '造訪實際網站'}</span>
-                </a>
+            </div>
+
+            <div className="p-6 space-y-5">
+              <div>
+                <div className="flex items-center gap-2 text-xs text-zinc-500 mb-1">
+                  <span className="font-semibold text-theme-primary">{activeProject.category}</span>
+                  <span>·</span>
+                  <span className="font-mono-tech">{activeProject.year}</span>
+                </div>
+                <h3 className="text-xl font-bold text-zinc-900">
+                  {language === 'en' && activeProject.titleEn
+                    ? activeProject.titleEn
+                    : activeProject.title}
+                </h3>
+              </div>
+
+              <p className="text-sm text-zinc-600 leading-relaxed">
+                {language === 'en' && activeProject.descriptionEn
+                  ? activeProject.descriptionEn
+                  : activeProject.description}
+              </p>
+
+              {(activeProject.details || activeProject.detailsEn) && (
+                <div className="rounded-xl bg-zinc-50 border border-zinc-200/80 p-4 space-y-1.5">
+                  <div className="text-xs font-semibold text-zinc-900">{t.projectOverview}</div>
+                  <p className="text-sm text-zinc-600 leading-relaxed">
+                    {language === 'en' && activeProject.detailsEn
+                      ? activeProject.detailsEn
+                      : activeProject.details}
+                  </p>
+                </div>
               )}
+
+              <div>
+                <div className="text-xs font-semibold text-zinc-900 mb-2">{t.techStack}</div>
+                <div className="flex flex-wrap gap-1.5">
+                  {activeProject.tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 rounded-md bg-zinc-100 text-zinc-700 text-xs font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-end gap-2.5 pt-4 border-t border-zinc-100">
+                {activeProject.githubUrl && (
+                  <a
+                    href={activeProject.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-zinc-200 text-xs font-medium text-zinc-700 hover:bg-zinc-50"
+                  >
+                    <Github className="w-3.5 h-3.5" />
+                    <span>{t.sourceCode}</span>
+                  </a>
+                )}
+                {activeProject.link && (
+                  <a
+                    href={activeProject.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-theme-primary bg-theme-primary-hover text-white text-xs font-medium"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>{t.liveDemo}</span>
+                  </a>
+                )}
+              </div>
             </div>
           </div>
         </div>

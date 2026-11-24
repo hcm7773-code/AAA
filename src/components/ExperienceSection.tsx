@@ -1,330 +1,321 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
+import {
+  Briefcase,
+  GraduationCap,
+  Search,
+  Award,
+  Plus,
+  X,
+  Check,
+  Sparkles,
+} from 'lucide-react';
 import { ExperienceItem } from '../types';
 import { Language, translations } from '../data/translations';
-import { Briefcase, GraduationCap, Calendar, ChevronRight, Sparkles, Award, Edit3, Plus, X, Check } from 'lucide-react';
 
 interface ExperienceSectionProps {
   experiences: ExperienceItem[];
-  lang?: Language;
-  onUpdateExperiences?: (updated: ExperienceItem[]) => void;
+  onUpdateExperiences: (updated: ExperienceItem[]) => void;
+  language: Language;
+  isPreviewMode?: boolean;
 }
+
+const PRESET_BADGES_ZH = ['效能提升 40%', '團隊領導', '零重大故障', '架構重構'];
+const PRESET_BADGES_EN = ['+40% Performance', 'Tech Lead', 'Zero Downtime', 'Architecture Revamp'];
 
 export const ExperienceSection: React.FC<ExperienceSectionProps> = ({
   experiences,
-  lang = 'zh',
   onUpdateExperiences,
+  language,
+  isPreviewMode = false,
 }) => {
-  const [filter, setFilter] = useState<'all' | 'work' | 'education'>('all');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [items, setItems] = useState<ExperienceItem[]>(experiences);
-  const [editingItemId, setEditingItemId] = useState<string | null>(null);
-  const [newTagInput, setNewTagInput] = useState<string>('');
+  const [filterType, setFilterType] = useState<'all' | 'work' | 'education'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [editingExpId, setEditingExpId] = useState<string | null>(null);
+  const [newBadgeText, setNewBadgeText] = useState('');
 
-  const t = translations[lang];
+  const t = translations[language];
 
-  useEffect(() => {
-    setItems(experiences);
-  }, [experiences]);
+  const filteredExperiences = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return experiences.filter((exp) => {
+      if (filterType !== 'all' && exp.type !== filterType) return false;
+      if (!q) return true;
+      const role = (language === 'en' && exp.roleEn ? exp.roleEn : exp.role).toLowerCase();
+      const company = (language === 'en' && exp.companyEn ? exp.companyEn : exp.company).toLowerCase();
+      const desc = (language === 'en' && exp.descriptionEn ? exp.descriptionEn : exp.description).toLowerCase();
+      const skillsMatch = exp.skills.some((s) => s.toLowerCase().includes(q));
+      return role.includes(q) || company.includes(q) || desc.includes(q) || skillsMatch;
+    });
+  }, [experiences, filterType, searchQuery, language]);
 
-  const updateItems = (newItems: ExperienceItem[]) => {
-    setItems(newItems);
-    if (onUpdateExperiences) {
-      onUpdateExperiences(newItems);
+  const handleAddBadge = (expId: string, textToAdd?: string) => {
+    const cleanText = (textToAdd ?? newBadgeText).trim();
+    if (!cleanText) return;
+
+    const updated = experiences.map((exp) => {
+      if (exp.id !== expId) return exp;
+      if (language === 'en') {
+        const current = exp.achievementsEn || [];
+        if (current.includes(cleanText)) return exp;
+        return { ...exp, achievementsEn: [...current, cleanText] };
+      } else {
+        const current = exp.achievements || [];
+        if (current.includes(cleanText)) return exp;
+        return { ...exp, achievements: [...current, cleanText] };
+      }
+    });
+
+    onUpdateExperiences(updated);
+    if (!textToAdd) {
+      setNewBadgeText('');
+      setEditingExpId(null);
     }
   };
 
-  const handleToggleEditAchievements = (itemId: string) => {
-    if (editingItemId === itemId) {
-      setEditingItemId(null);
-      setNewTagInput('');
-    } else {
-      setEditingItemId(itemId);
-      setNewTagInput('');
-    }
-  };
-
-  const handleAddAchievement = (itemId: string, tag: string) => {
-    const trimmed = tag.trim();
-    if (!trimmed) return;
-
-    const newItems = items.map((item) => {
-      if (item.id === itemId) {
-        const current = item.achievements || [];
-        if (current.includes(trimmed)) return item;
-        return {
-          ...item,
-          achievements: [...current, trimmed],
-        };
+  const handleRemoveBadge = (expId: string, badgeIdx: number) => {
+    const updated = experiences.map((exp) => {
+      if (exp.id !== expId) return exp;
+      if (language === 'en') {
+        const current = [...(exp.achievementsEn || [])];
+        current.splice(badgeIdx, 1);
+        return { ...exp, achievementsEn: current };
+      } else {
+        const current = [...(exp.achievements || [])];
+        current.splice(badgeIdx, 1);
+        return { ...exp, achievements: current };
       }
-      return item;
     });
-
-    updateItems(newItems);
-    setNewTagInput('');
+    onUpdateExperiences(updated);
   };
-
-  const handleRemoveAchievement = (itemId: string, indexToRemove: number) => {
-    const newItems = items.map((item) => {
-      if (item.id === itemId && item.achievements) {
-        return {
-          ...item,
-          achievements: item.achievements.filter((_, idx) => idx !== indexToRemove),
-        };
-      }
-      return item;
-    });
-
-    updateItems(newItems);
-  };
-
-  const filteredItems = items.filter((item) => {
-    const matchesType = filter === 'all' || item.type === filter;
-    const matchesSearch =
-      searchTerm === '' ||
-      item.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.achievements &&
-        item.achievements.some((a) => a.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-      item.skills.some((s) => s.toLowerCase().includes(searchTerm.toLowerCase()));
-    return matchesType && matchesSearch;
-  });
 
   return (
-    <section className="space-y-6">
-      {/* Header & Filter Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-zinc-200/80">
-        <h2 className="text-base font-bold text-zinc-900 flex items-center gap-2 tracking-tight">
-          <span className="w-5 h-[1.5px] bg-theme-primary"></span>
-          {t.expTitle}
-        </h2>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Tab Filters */}
-          <div className="flex items-center bg-zinc-100 p-1 rounded-lg border border-zinc-200 text-xs font-medium self-start sm:self-auto">
-            <button
-              onClick={() => setFilter('all')}
-              className={`px-3 py-1 rounded transition-colors ${
-                filter === 'all'
-                  ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
-              }`}
-            >
-              {t.allTypes} ({items.length})
-            </button>
-            <button
-              onClick={() => setFilter('work')}
-              className={`px-3 py-1 rounded transition-colors flex items-center gap-1 ${
-                filter === 'work'
-                  ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
-              }`}
-            >
-              <Briefcase className="w-3 h-3" />
-              {t.workType}
-            </button>
-            <button
-              onClick={() => setFilter('education')}
-              className={`px-3 py-1 rounded transition-colors flex items-center gap-1 ${
-                filter === 'education'
-                  ? 'bg-white text-zinc-900 font-bold shadow-xs'
-                  : 'text-zinc-500 hover:text-zinc-900'
-              }`}
-            >
-              <GraduationCap className="w-3 h-3" />
-              {t.eduType}
-            </button>
-          </div>
-
-          {/* Search Box */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={t.searchExpPlaceholder}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-3 py-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-md outline-none focus:border-zinc-500 w-full sm:w-48 transition-colors"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 text-xs"
-              >
-                ✕
-              </button>
-            )}
-          </div>
+    <section id="section-experience" className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-900 tracking-tight">
+            {t.expTitle}
+          </h2>
+          <p className="text-sm text-zinc-500 mt-1">{t.expSubtitle}</p>
         </div>
+
+        {!isPreviewMode && (
+          <div className="flex flex-wrap items-center gap-2 no-print">
+            <div className="inline-flex rounded-lg border border-zinc-200 bg-white p-0.5">
+              {(['all', 'work', 'education'] as const).map((type) => {
+                const label =
+                  type === 'all' ? t.filterAll : type === 'work' ? t.filterWork : t.filterEdu;
+                const active = filterType === type;
+                return (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setFilterType(type)}
+                    className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                      active
+                        ? 'bg-theme-primary text-white shadow-xs'
+                        : 'text-zinc-600 hover:text-zinc-900'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Timeline List */}
-      <div className="space-y-6 relative before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-[1px] before:bg-zinc-200 pl-2">
-        {filteredItems.map((item) => {
-          const roleStr = lang === 'en' ? (item.roleEn || item.role) : item.role;
-          const companyStr = lang === 'en' ? (item.companyEn || item.company) : item.company;
-          const descStr = lang === 'en' ? (item.descriptionEn || item.description) : item.description;
-          const highlightsList = lang === 'en' && item.highlightsEn ? item.highlightsEn : item.highlights;
-          const achievementsList = lang === 'en' && item.achievementsEn ? item.achievementsEn : item.achievements;
+      {!isPreviewMode && (
+        <div className="relative no-print">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder={t.searchExpPlaceholder}
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 bg-white text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/10 focus:border-zinc-400"
+          />
+        </div>
+      )}
 
-          return (
-            <div key={item.id} className="relative pl-8 group">
-              {/* Timeline node icon dot */}
-              <div className="absolute left-0 top-1 w-7 h-7 rounded-full bg-white border border-zinc-300 flex items-center justify-center text-zinc-600 group-hover:border-zinc-900 group-hover:bg-zinc-900 group-hover:text-white transition-all shadow-xs">
-                {item.type === 'work' ? (
-                  <Briefcase className="w-3.5 h-3.5" />
-                ) : (
-                  <GraduationCap className="w-3.5 h-3.5" />
-                )}
-              </div>
+      {filteredExperiences.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-zinc-200 bg-white p-10 text-center text-sm text-zinc-500">
+          {t.noExpMatch}
+        </div>
+      ) : (
+        <div className="relative space-y-5 before:absolute before:left-[19px] before:top-4 before:bottom-4 before:w-px before:bg-zinc-200">
+          {filteredExperiences.map((exp) => {
+            const role = language === 'en' && exp.roleEn ? exp.roleEn : exp.role;
+            const company = language === 'en' && exp.companyEn ? exp.companyEn : exp.company;
+            const description =
+              language === 'en' && exp.descriptionEn ? exp.descriptionEn : exp.description;
+            const highlights =
+              language === 'en' && exp.highlightsEn ? exp.highlightsEn : exp.highlights;
+            const badges =
+              language === 'en'
+                ? exp.achievementsEn || exp.achievements || []
+                : exp.achievements || [];
+            const isEditingThis = editingExpId === exp.id;
+            const presets = language === 'en' ? PRESET_BADGES_EN : PRESET_BADGES_ZH;
 
-              {/* Timeline Item Content Card */}
-              <div className="bg-white border border-zinc-200 rounded-lg p-5 shadow-xs hover:shadow-md hover:-translate-y-1 hover:border-zinc-300 transition-all duration-300">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
-                  <span className="inline-flex items-center gap-1 text-[11px] font-mono font-semibold text-zinc-400 tracking-wider">
-                    <Calendar className="w-3 h-3 text-zinc-400" />
-                    {item.period}
-                  </span>
-                  <span className="text-[11px] px-2 py-0.5 bg-zinc-100 text-zinc-600 rounded border border-zinc-200 font-mono self-start sm:self-auto">
-                    {item.type === 'work' ? (lang === 'en' ? 'Full-time Work' : '全職工作') : (lang === 'en' ? 'Academic Degree' : '學術學位')}
-                  </span>
+            return (
+              <div key={exp.id} className="relative pl-12">
+                <div
+                  className={`absolute left-0 top-5 w-10 h-10 rounded-xl border flex items-center justify-center bg-white shadow-xs ${
+                    exp.type === 'work'
+                      ? 'border-zinc-200 text-theme-primary'
+                      : 'border-zinc-200 text-zinc-500'
+                  }`}
+                >
+                  {exp.type === 'work' ? (
+                    <Briefcase className="w-4 h-4" />
+                  ) : (
+                    <GraduationCap className="w-4 h-4" />
+                  )}
                 </div>
 
-                <h3 className="font-bold text-zinc-900 text-base">
-                  {roleStr}{' '}
-                  <span className="font-normal text-zinc-500 text-sm">
-                    @ {companyStr}
-                  </span>
-                </h3>
-
-                <p className="text-xs sm:text-sm text-zinc-600 mt-2 leading-relaxed">
-                  {descStr}
-                </p>
-
-                {/* Achievements Badges Section */}
-                <div className="mt-3.5 pt-3 border-t border-zinc-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-[11px] font-bold text-zinc-600 uppercase tracking-wider flex items-center gap-1.5">
-                      <Award className="w-3.5 h-3.5 text-amber-500" />
-                      {t.achievements}
+                <div className="rounded-2xl border border-zinc-200/90 bg-white p-5 sm:p-6 shadow-xs hover:border-zinc-300 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-base sm:text-lg font-bold text-zinc-900">{role}</h3>
+                        <span className="text-xs font-medium px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600">
+                          {exp.type === 'work' ? t.typeWork : t.typeEdu}
+                        </span>
+                      </div>
+                      <p className="text-sm font-semibold text-theme-primary mt-0.5">{company}</p>
+                    </div>
+                    <span className="text-xs font-mono-tech font-medium text-zinc-500 bg-zinc-50 border border-zinc-200/80 px-2.5 py-1 rounded-lg self-start">
+                      {exp.period}
                     </span>
-                    <button
-                      onClick={() => handleToggleEditAchievements(item.id)}
-                      className="text-[11px] text-zinc-500 hover:text-zinc-900 font-medium flex items-center gap-1 px-2 py-0.5 rounded hover:bg-zinc-100 border border-transparent hover:border-zinc-200 transition-colors no-print"
-                      title="編輯成就標籤"
-                    >
-                      <Edit3 className="w-3 h-3 text-zinc-400" />
-                      {editingItemId === item.id ? (lang === 'en' ? 'Done' : '完成編輯') : (lang === 'en' ? 'Edit Badges' : '編輯標籤')}
-                    </button>
                   </div>
 
-                  {/* Badges List */}
-                  {achievementsList && achievementsList.length > 0 ? (
-                    <div className="flex flex-wrap gap-1.5">
-                      {achievementsList.map((badge, bIdx) => (
+                  <p className="text-sm text-zinc-600 leading-relaxed mt-3">{description}</p>
+
+                  {/* Highlights */}
+                  {highlights.length > 0 && (
+                    <ul className="mt-4 space-y-1.5">
+                      {highlights.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-2.5 text-sm text-zinc-700">
+                          <span className="w-1.5 h-1.5 rounded-full bg-theme-accent mt-2 shrink-0" />
+                          <span className="leading-relaxed">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {/* Editable Achievement Badges */}
+                  <div className="mt-4 pt-4 border-t border-zinc-100">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-400 uppercase tracking-wider mr-1">
+                        <Award className="w-3.5 h-3.5" />
+                        {t.achievementsLabel}
+                      </span>
+
+                      {badges.map((badge, idx) => (
                         <span
-                          key={bIdx}
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50/90 text-amber-950 border border-amber-200/90 rounded-md text-xs font-semibold shadow-2xs transition-all hover:border-amber-300"
+                          key={`${badge}-${idx}`}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-theme-accent-light text-theme-primary border border-zinc-200/60 text-xs font-semibold"
                         >
+                          <Sparkles className="w-3 h-3 opacity-80" />
                           <span>{badge}</span>
-                          {editingItemId === item.id && (
+                          {!isPreviewMode && (
                             <button
-                              onClick={() => handleRemoveAchievement(item.id, bIdx)}
-                              className="text-amber-700 hover:text-rose-600 ml-0.5 p-0.5 rounded hover:bg-amber-100 transition-colors no-print"
-                              title="刪除此標籤"
+                              type="button"
+                              onClick={() => handleRemoveBadge(exp.id, idx)}
+                              className="no-print ml-0.5 text-zinc-400 hover:text-zinc-900 cursor-pointer"
+                              aria-label="Remove badge"
                             >
                               <X className="w-3 h-3" />
                             </button>
                           )}
                         </span>
                       ))}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-zinc-400 italic">
-                      {lang === 'en' ? 'No achievements added yet.' : '尚無設定成就標籤'}
-                    </p>
-                  )}
 
-                  {/* Editing Inline Panel */}
-                  {editingItemId === item.id && (
-                    <div className="mt-3 p-3 bg-zinc-50 rounded-lg border border-zinc-200 space-y-2.5 no-print">
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          placeholder={lang === 'en' ? 'Enter achievement tag (e.g. 🏆 Top Performer)...' : '輸入成就標籤 (例如: 🏆 專案績效特優)...'}
-                          value={newTagInput}
-                          onChange={(e) => setNewTagInput(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault();
-                              handleAddAchievement(item.id, newTagInput);
-                            }
-                          }}
-                          className="flex-1 px-2.5 py-1.5 text-xs bg-white border border-zinc-300 rounded outline-none focus:border-zinc-500"
-                        />
+                      {!isPreviewMode && !isEditingThis && (
                         <button
-                          onClick={() => handleAddAchievement(item.id, newTagInput)}
-                          className="px-3 py-1.5 bg-zinc-900 hover:bg-black text-white rounded text-xs font-bold transition-colors flex items-center gap-1 shrink-0"
+                          type="button"
+                          onClick={() => {
+                            setEditingExpId(exp.id);
+                            setNewBadgeText('');
+                          }}
+                          className="no-print inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-dashed border-zinc-300 text-xs font-medium text-zinc-500 hover:text-zinc-900 hover:border-zinc-400 transition-colors cursor-pointer"
                         >
-                          <Plus className="w-3.5 h-3.5" />
-                          {lang === 'en' ? 'Add Tag' : '新增標籤'}
+                          <Plus className="w-3 h-3" />
+                          <span>{t.addAchievement}</span>
                         </button>
-                      </div>
-
-                      {/* Quick Preset Badges */}
-                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] pt-1.5 border-t border-zinc-200/80">
-                        <span className="text-zinc-500 font-medium flex items-center gap-1">
-                          <Sparkles className="w-3 h-3 text-amber-500" />
-                          {lang === 'en' ? 'Suggestions:' : '快速建議：'}
-                        </span>
-                        {(lang === 'en' 
-                          ? ['🏆 Best Employee', '🚀 30% Speed Boost', '🏅 Project Award', '⭐ 100% On Time', '🎓 Scholarship']
-                          : ['🏆 最佳員工獎', '🚀 效能提升 30%', '🏅 專案獲獎', '⭐ 100% 準時交付', '🎓 優秀學業獎學金']
-                        ).map((preset, pIdx) => (
-                          <button
-                            key={pIdx}
-                            type="button"
-                            onClick={() => handleAddAchievement(item.id, preset)}
-                            className="px-2 py-0.5 bg-white border border-zinc-200 text-zinc-700 hover:text-black hover:border-zinc-400 rounded text-[11px] transition-colors"
-                          >
-                            + {preset}
-                          </button>
-                        ))}
-                      </div>
+                      )}
                     </div>
-                  )}
-                </div>
 
-                {/* Highlights List */}
-                {highlightsList && highlightsList.length > 0 && (
-                  <ul className="mt-3.5 space-y-1.5 border-t border-zinc-100 pt-3">
-                    {highlightsList.map((point, idx) => (
-                      <li
-                        key={idx}
-                        className="text-xs text-zinc-600 flex items-start gap-2 leading-normal"
+                    {isEditingThis && !isPreviewMode && (
+                      <div className="mt-3 p-3 rounded-xl bg-zinc-50 border border-zinc-200 space-y-2.5 no-print">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            value={newBadgeText}
+                            onChange={(e) => setNewBadgeText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                handleAddBadge(exp.id);
+                              }
+                            }}
+                            placeholder={t.achievementPlaceholder}
+                            className="flex-1 px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-zinc-900/10"
+                          />
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => handleAddBadge(exp.id)}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-theme-primary text-white text-xs font-medium cursor-pointer"
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                              <span>{t.save}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditingExpId(null)}
+                              className="px-3 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs font-medium text-zinc-600 hover:text-zinc-900 cursor-pointer"
+                            >
+                              {t.cancel}
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="text-[11px] text-zinc-400">{t.quickPresets}</span>
+                          {presets.map((preset) => (
+                            <button
+                              key={preset}
+                              type="button"
+                              onClick={() => handleAddBadge(exp.id, preset)}
+                              className="px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-[11px] text-zinc-600 hover:text-zinc-900 hover:border-zinc-300 cursor-pointer"
+                            >
+                              + {preset}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Skill Tags */}
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {exp.skills.map((skill) => (
+                      <span
+                        key={skill}
+                        className="px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-700 text-xs font-medium"
                       >
-                        <ChevronRight className="w-3.5 h-3.5 text-zinc-400 shrink-0 mt-0.5" />
-                        <span>{point}</span>
-                      </li>
+                        {skill}
+                      </span>
                     ))}
-                  </ul>
-                )}
-
-                {/* Skills Tags */}
-                <div className="mt-4 flex flex-wrap gap-1.5 pt-2">
-                  {item.skills.map((skill, sIdx) => (
-                    <span
-                      key={sIdx}
-                      className="px-2.5 py-1 bg-zinc-50 text-zinc-700 border border-zinc-200 rounded text-[11px] font-medium"
-                    >
-                      {skill}
-                    </span>
-                  ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 };

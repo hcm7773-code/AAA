@@ -1,49 +1,110 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: "Plus Jakarta Sans", "Noto Sans TC", -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: "JetBrains Mono", "Noto Sans TC", ui-monospace, SFMono-Regular, monospace;
+:root {
+  --theme-primary: #18181b;
+  --theme-primary-hover: #09090b;
+  --theme-accent: #3f3f46;
+  --theme-accent-light: #f4f4f5;
+  --theme-ring: #a1a1aa;
 }
 
-@layer base {
-  html {
-    scroll-behavior: smooth;
-    font-family: var(--font-sans);
-  }
-
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-  }
+body {
+  font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle tech grid surface for selected analytical frames */
-.tech-grid-surface {
-  background-image:
-    linear-gradient(to right, rgba(79, 70, 229, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(79, 70, 229, 0.04) 1px, transparent 1px);
-  background-size: 28px 28px;
+.font-mono-tech {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
-.tech-indigo-panel {
-  background: linear-gradient(155deg, #100c3b 0%, #171252 55%, #110d40 100%);
+/* Dynamic Theme Helper Classes */
+.bg-theme-primary {
+  background-color: var(--theme-primary) !important;
+}
+
+.bg-theme-primary-hover:hover {
+  background-color: var(--theme-primary-hover) !important;
+}
+
+.bg-theme-accent {
+  background-color: var(--theme-accent) !important;
+}
+
+.bg-theme-accent-light {
+  background-color: var(--theme-accent-light) !important;
+}
+
+.text-theme-primary {
+  color: var(--theme-primary) !important;
+}
+
+.text-theme-accent {
+  color: var(--theme-accent) !important;
+}
+
+.border-theme-primary {
+  border-color: var(--theme-primary) !important;
+}
+
+.border-theme-accent {
+  border-color: var(--theme-accent) !important;
+}
+
+@page {
+  size: auto;
+  margin: 20mm;
 }
 
 @media print {
-  header,
-  .no-print {
-    display: none !important;
-  }
   body {
-    background: #ffffff !important;
-    color: #0f172a !important;
-  }
-  .tech-indigo-panel {
-    background: #110d40 !important;
+    background-color: #ffffff !important;
+    color: #09090b !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+
+  .no-print {
+    display: none !important;
+  }
+
+  #resume-app-container {
+    display: block !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  aside {
+    width: 100% !important;
+    position: static !important;
+    height: auto !important;
+    border-right: none !important;
+    border-bottom: 1px solid #e4e4e7 !important;
+    padding: 0 0 16px 0 !important;
+    margin-bottom: 20px !important;
+    background: #ffffff !important;
+  }
+
+  main {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding: 0 !important;
+  }
+
   section {
     break-inside: avoid;
     page-break-inside: avoid;
+  }
+
+  #resume-app-container::after {
+    content: attr(data-print-date);
+    display: block;
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #e4e4e7;
+    font-size: 11px;
+    color: #71717a;
+    text-align: right;
   }
 }

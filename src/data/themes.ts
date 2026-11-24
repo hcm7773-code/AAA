@@ -2,95 +2,88 @@ export type ThemeId = 'zinc' | 'navy' | 'emerald' | 'wine' | 'indigo' | 'amber';
 
 export interface ThemeOption {
   id: ThemeId;
-  nameZh: string;
+  name: string;
   nameEn: string;
-  primaryColor: string;      // main brand color (e.g., #18181b)
-  primaryHover: string;      // hover state (e.g., #09090b)
-  accentColor: string;       // secondary accent (e.g., #27272a)
-  accentLight: string;       // light tint background (e.g., #f4f4f5)
-  ringColor: string;         // focus ring color (e.g., #a1a1aa)
-  dotColor: string;          // color swatch preview
+  primary: string;
+  primaryHover: string;
+  accent: string;
+  accentLight: string;
+  ring: string;
 }
 
 export const themeOptions: ThemeOption[] = [
   {
     id: 'zinc',
-    nameZh: '極簡深灰',
+    name: '極簡深灰',
     nameEn: 'Minimal Charcoal',
-    primaryColor: '#18181b',
+    primary: '#18181b',
     primaryHover: '#09090b',
-    accentColor: '#3f3f46',
+    accent: '#3f3f46',
     accentLight: '#f4f4f5',
-    ringColor: '#a1a1aa',
-    dotColor: '#18181b',
+    ring: '#a1a1aa',
   },
   {
     id: 'navy',
-    nameZh: '皇家海軍藍',
+    name: '皇家海軍藍',
     nameEn: 'Royal Navy',
-    primaryColor: '#1e3a8a',
+    primary: '#1e3a8a',
     primaryHover: '#172554',
-    accentColor: '#2563eb',
+    accent: '#1d4ed8',
     accentLight: '#eff6ff',
-    ringColor: '#60a5fa',
-    dotColor: '#1e3a8a',
+    ring: '#93c5fd',
   },
   {
     id: 'emerald',
-    nameZh: '深邃森林綠',
+    name: '深邃森林綠',
     nameEn: 'Forest Emerald',
-    primaryColor: '#064e3b',
+    primary: '#064e3b',
     primaryHover: '#022c22',
-    accentColor: '#059669',
+    accent: '#047857',
     accentLight: '#ecfdf5',
-    ringColor: '#34d399',
-    dotColor: '#064e3b',
+    ring: '#6ee7b7',
   },
   {
     id: 'wine',
-    nameZh: '勃根地酒紅',
+    name: '勃根地酒紅',
     nameEn: 'Burgundy Wine',
-    primaryColor: '#881337',
+    primary: '#881337',
     primaryHover: '#4c0519',
-    accentColor: '#be123c',
+    accent: '#be123c',
     accentLight: '#fff1f2',
-    ringColor: '#fb7185',
-    dotColor: '#881337',
+    ring: '#fda4af',
   },
   {
     id: 'indigo',
-    nameZh: '極光靛藍',
+    name: '極光靛藍',
     nameEn: 'Deep Indigo',
-    primaryColor: '#312e81',
+    primary: '#312e81',
     primaryHover: '#1e1b4b',
-    accentColor: '#4f46e5',
+    accent: '#4338ca',
     accentLight: '#eef2ff',
-    ringColor: '#818cf8',
-    dotColor: '#312e81',
+    ring: '#a5b4fc',
   },
   {
     id: 'amber',
-    nameZh: '暖陽琥珀',
+    name: '暖陽琥珀',
     nameEn: 'Warm Amber',
-    primaryColor: '#78350f',
+    primary: '#78350f',
     primaryHover: '#451a03',
-    accentColor: '#d97706',
+    accent: '#b45309',
     accentLight: '#fffbeb',
-    ringColor: '#fbbf24',
-    dotColor: '#78350f',
+    ring: '#fcd34d',
   },
 ];
 
-export const getThemeById = (id: ThemeId): ThemeOption => {
+export function getThemeById(id?: ThemeId): ThemeOption {
   return themeOptions.find((t) => t.id === id) || themeOptions[0];
-};
+}
 
-export const applyThemeToDocument = (theme: ThemeOption) => {
+export function applyThemeToDocument(themeId: ThemeId): void {
+  const theme = getThemeById(themeId);
   const root = document.documentElement;
-  root.style.setProperty('--theme-primary', theme.primaryColor);
+  root.style.setProperty('--theme-primary', theme.primary);
   root.style.setProperty('--theme-primary-hover', theme.primaryHover);
-  root.style.setProperty('--theme-accent', theme.accentColor);
+  root.style.setProperty('--theme-accent', theme.accent);
   root.style.setProperty('--theme-accent-light', theme.accentLight);
-  root.style.setProperty('--theme-ring', theme.ringColor);
-  root.setAttribute('data-theme', theme.id);
-};
+  root.style.setProperty('--theme-ring', theme.ring);
+}
