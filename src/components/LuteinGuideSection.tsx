@@ -55,7 +55,7 @@ export const LuteinGuideSection: React.FC = () => {
           href={LUTEIN_GUIDE_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="block w-full h-28 sm:h-36 bg-slate-100 overflow-hidden border-b border-slate-100 group"
+          className="block w-full h-[104px] sm:h-32 bg-slate-100 overflow-hidden border-b border-slate-100 group"
           title="葉黃素推薦與選購指南專題"
         >
           <img
