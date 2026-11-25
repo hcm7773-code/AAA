@@ -3,8 +3,8 @@ import { ChevronLeft, ChevronRight, Pause, Play, ExternalLink } from 'lucide-rea
 import goldNewsImg from '../assets/images/theme_gold_news_lutein_1795585560661.jpg';
 import eyemallEventsImg from '../assets/images/theme_eyemall_events_promo_1795585560315.jpg';
 import eyemallGoldImg from '../assets/images/theme_eyemall_gold_series_1795585560986.jpg';
+import eyemallHomeImg from '../assets/images/theme_eyemall_home_1795589769743.jpg';
 import locationImg from '../assets/images/theme_eyeglasses_location_1795584359295.jpg';
-import luteinGuideImg from '../assets/images/theme_lutein_guide_1795584359388.jpg';
 
 export interface CarouselSlide {
   id: string;
@@ -43,18 +43,18 @@ const SLIDES: CarouselSlide[] = [
   {
     id: 'slide-4',
     indexLabel: '04',
-    title: '大學眼鏡 全台門市據點查詢',
-    tag: '04 門市服務據點',
-    url: 'https://www.eyeglasses.com.tw/Location',
-    imageUrl: locationImg,
+    title: 'eyemall 大學眼鏡官方購物商城',
+    tag: '04 官方購物商城',
+    url: 'https://www.eyemall.com.tw/',
+    imageUrl: eyemallHomeImg,
   },
   {
     id: 'slide-5',
     indexLabel: '05',
-    title: '葉黃素推薦與選購指南專題',
-    tag: '05 專題評比文章',
-    url: 'https://medicalnewstw.com/article/01-lutein-best/?prod=lutein&pg=best&act=all&site=mdn&kw=%E8%91%89%E9%BB%83%E7%B4%A0&gad_source=1&gad_camp=1&gad_619435551&gbraid=0AAAAAqKr4A-0cb3g6-wy-6gyKMuiLOuyF&gclid=CjwKCAiAn4XYBhA-EiwaA8176FYLY53CTADjSuCXsnwCT89jpyzBXX6DSBwThv_fmfCzhK4PZJtih3xoCNbwQAvD_BwE',
-    imageUrl: luteinGuideImg,
+    title: '大學眼鏡 全台門市據點查詢',
+    tag: '05 門市服務據點',
+    url: 'https://www.eyeglasses.com.tw/Location',
+    imageUrl: locationImg,
   },
 ];
 
