@@ -7,19 +7,45 @@ body,
   margin: 0;
   padding: 0;
   background-color: #ffffff;
+  font-family: 'Plus Jakarta Sans', 'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-@keyframes singleImageFadeIn {
+.font-mono-tech {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@keyframes carouselSlideFadeIn {
   0% {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
+    opacity: 0.25;
+    transform: scale(1.02);
   }
   100% {
     opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-carousel-slide {
+  animation: carouselSlideFadeIn 0.65s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes enhancedSingleImageFadeIn {
+  0% {
+    opacity: 0;
+    filter: blur(12px);
+    transform: translateY(32px) scale(0.94);
+  }
+  40% {
+    opacity: 0.4;
+    filter: blur(5px);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0px);
     transform: translateY(0) scale(1);
   }
 }
 
-.animate-single-image-fade {
-  animation: singleImageFadeIn 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+.animate-enhanced-image-fade {
+  animation: enhancedSingleImageFadeIn 2.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
